@@ -2,22 +2,28 @@
 <html>
 <head>
 	<title>TGA</title>
+	<link rel="stylesheet" href="./css/bootstrap.min.css">
 </head>
 <body>
-	<h1>TGA</h1>
-	<!-- <button onclick="teste()">Teste</button> -->
-	<br>
-	<!-- <button onclick="calcVoronoi()">Voronoi</button> -->
-	<button id="aStar">A*</button>
-
-	<div class="ptsContainer">
-		<h3>Pontos</h3>
-		<canvas style="border: 2px solid red" id="fixedPtsCanvas" width="500" height="500">
-			Your browser does not support the canvas element.
-		</canvas>  
+	<div class="container">
+			<h1>TGA</h1>
+			<!-- <button onclick="teste()">Teste</button> -->
+			<br>
+			<!-- <button onclick="calcVoronoi()">Voronoi</button> -->
+			<button class="btn btn-primary" id="aStar">A*</button>
+		
+			<div class="ptsContainer">
+				<h3>Pontos</h3>
+				<canvas style="border: 2px solid red" id="fixedPtsCanvas" width="500" height="500">
+					Your browser does not support the canvas element.
+				</canvas>  
+			</div>
 	</div>
+	
 	
 	<script src="./rhill-voronoi-core.js"></script>
 	<script src="./functions.js"></script>
+	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+	<script src="./js/bootstrap.min.js"></script>
 </body>
 </html>

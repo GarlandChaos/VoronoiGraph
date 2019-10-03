@@ -87,30 +87,7 @@ var points = [
 ]; 
 var convexHull = new Array();
 
-//Canvas functions
-function drawClosestPoint(P, close, c){
-	clearCanvas(c);
-	drawPoints(P, c);
-	c.beginPath();
-	c.moveTo(close[1][0] * pixelOffset + canvasWidth/2 + pxWidth/2, close[1][1] * pixelOffset + canvasHeight/2 + pxHeight/2);
-	c.lineTo(close[2][0] * pixelOffset + canvasWidth/2 + pxWidth/2, close[2][1] * pixelOffset + canvasHeight/2 + pxHeight/2);
-	c.strokeStyle = "#FF0000";
-	c.stroke();
-
-	var color = [255, 0, 0, 255];
-	drawPixel(close[1][0] * pixelOffset + canvasWidth/2, close[1][1] * pixelOffset + canvasHeight/2, color, c);
-	drawPixel(close[2][0] * pixelOffset + canvasWidth/2, close[2][1] * pixelOffset + canvasHeight/2, color, c);
-}
-
-function drawPoints(P, c){
-	clearCanvas(c);
-	var color = [0,0,0,255];
-	for(var i = 0; i < P.length; i++){
-		drawPixel(P[i][0] * pixelOffset + canvasWidth/2, P[i][1] * pixelOffset + canvasHeight/2, color, c);
-	}
-}
-
-function drawPixel(x, y, color, c){
+function drawPoint(x, y, color, c){
 
     // dt[0] = color[0];
     // dt[1] = color[1];
@@ -125,6 +102,17 @@ function drawPixel(x, y, color, c){
 	c.arc(x, y, 10, 0, 2 * Math.PI, false);
 	c.fillStyle = "rgba("+color[0]+","+color[1]+","+color[2]+","+color[3]/255+")";
 	c.fill();
+}
+
+function drawEdge(xStart, yStart, xEnd, yEnd, style, lineWeight = 1){
+	ctx.beginPath();
+	
+	ctx.moveTo(xStart, yStart);
+	ctx.lineTo(xEnd, yEnd);
+	
+	ctx.lineWidth = lineWeight;
+	ctx.strokeStyle = style;
+	ctx.stroke();
 }
 
 function clearCanvas(c){
@@ -148,7 +136,7 @@ function drawVoronoiPoints(P, c){
 	console.log(P);
 	var color = [0,0,0,255];
 	for(var i = 0; i < P.length; i++){
-		drawPixel(P[i][0], P[i][1], color, c);
+		drawPoint(P[i][0], P[i][1], color, c);
 	}
 }
 
@@ -157,25 +145,21 @@ function drawVoronoiEdges(){
 	for(var i = 0; i < diagram.edges.length; i++){
 		// console.log(diagram.edges[i].va);
 		
-		ctx.beginPath();
+		// ctx.beginPath();
 		
-		ctx.moveTo(diagram.edges[i].va.x, diagram.edges[i].va.y);
-		ctx.lineTo(diagram.edges[i].vb.x, diagram.edges[i].vb.y);
+		// ctx.moveTo(diagram.edges[i].va.x, diagram.edges[i].va.y);
+		// ctx.lineTo(diagram.edges[i].vb.x, diagram.edges[i].vb.y);
 		
-		ctx.strokeStyle = "#FF0000";
-		ctx.stroke();
-		
-		
-		
-		// if(diagram.edges[i].lSite != null && diagram.edges[i].rSite != null){
-		// 	ctx.beginPath();
-		// 	ctx.moveTo(diagram.edges[i].lSite.x, diagram.edges[i].lSite.y);
-		// 	ctx.lineTo(diagram.edges[i].rSite.x, diagram.edges[i].rSite.y);
-			
-		// 	ctx.strokeStyle = "#0000FF";
-		// 	ctx.stroke();
-		// }
-		
+		// ctx.strokeStyle = "#FF0000";
+		// ctx.stroke();
+
+		var style = "#cfd1d0";
+		drawEdge(
+			diagram.edges[i].va.x, 
+			diagram.edges[i].va.y, 
+			diagram.edges[i].vb.x, 
+			diagram.edges[i].vb.y, 
+			style);
 	}
 }
 
@@ -183,31 +167,27 @@ function drawGraphEdges(){
 	console.log("GRAPH EDGES: " + graph.edges.length);
 
 	for(var i = 0; i < graph.edges.length; i++){
-		ctx.beginPath();
+		// ctx.beginPath();
 		
-		ctx.moveTo(graph.edges[i].nodeBegin.x, graph.edges[i].nodeBegin.y);
-		ctx.lineTo(graph.edges[i].nodeEnd.x, graph.edges[i].nodeEnd.y);
+		// ctx.moveTo(graph.edges[i].nodeBegin.x, graph.edges[i].nodeBegin.y);
+		// ctx.lineTo(graph.edges[i].nodeEnd.x, graph.edges[i].nodeEnd.y);
 		
-		ctx.strokeStyle = "#00FF00";
-		ctx.stroke();
+		// ctx.strokeStyle = "#00FF00";
+		// ctx.stroke();
 		
-		
-		
-		// if(diagram.edges[i].lSite != null && diagram.edges[i].rSite != null){
-		// 	ctx.beginPath();
-		// 	ctx.moveTo(diagram.edges[i].lSite.x, diagram.edges[i].lSite.y);
-		// 	ctx.lineTo(diagram.edges[i].rSite.x, diagram.edges[i].rSite.y);
-			
-		// 	ctx.strokeStyle = "#0000FF";
-		// 	ctx.stroke();
-		// }
-		
+		var style = "#00FF00";
+		drawEdge(
+			graph.edges[i].nodeBegin.x, 
+			graph.edges[i].nodeBegin.y, 
+			graph.edges[i].nodeEnd.x, 
+			graph.edges[i].nodeEnd.y, 
+			style);	
 	}
 }
 
 function drawGraphNodes(){
 	for(var i = 0; i < graph.nodes.length; i++){
-		drawPixel(graph.nodes[i].x, graph.nodes[i].y, [0, 0, 0, 255], ctx);
+		drawPoint(graph.nodes[i].x, graph.nodes[i].y, [0, 0, 0, 255], ctx);
 	}
 }
 
@@ -347,15 +327,8 @@ canvas.addEventListener("click", function (evt) {
 			sites.push(newPoint);
 	
 			clearCanvas(ctx);
-			calcVoronoi();
-			// console.log(diagram);
-	
-			// drawPixel(newPoint.x, newPoint.y, [0, 0, 0, 255], ctx);
-	
-			getDiagramInfo();
-			
-			// console.log(sites);
-			
+			calcVoronoi();	
+			getDiagramInfo();			
 			drawVoronoiEdges();
 			drawGraphEdges();
 			drawGraphNodes();
@@ -367,31 +340,29 @@ canvas.addEventListener("click", function (evt) {
 		}
 	}
 	else {
-		for(var i = 0; i < graph.nodes.length; i++){
-			if(isIntersect(mousePos, graph.nodes[i])){
+		console.log("convexHull length: " + convexHull.length);
+		for(var i = 0; i < convexHull.length; i++){
+			if(isIntersect(mousePos, convexHull[i])){
 				// alert("clicked on point");
 				if(selectingStart){
-					startNode = graph.nodes[i];
+					startNode = convexHull[i];
 					var color = [255, 0, 0, 255];
-					drawPixel(graph.nodes[i].x, graph.nodes[i].y, color, ctx);
+					drawPoint(convexHull[i].x, convexHull[i].y, color, ctx);
 					selectingStart = false;
 					selectingGoal = true;
 					console.log("startNode x: " + startNode.x + " startNode y: " + startNode.y);
 					alert("Please click on goal node:");
 				}
 				else if(selectingGoal){
-					goalNode = graph.nodes[i];
+					goalNode = convexHull[i];
 					var color = [0, 0, 255, 255];
-					drawPixel(graph.nodes[i].x, graph.nodes[i].y, color, ctx);
+					drawPoint(convexHull[i].x, convexHull[i].y, color, ctx);
 					selectingGoal = false;
 					selectingPath = false;
 					//A* code here
 					var path = findPath(startNode, goalNode);
 					console.log(path);
-					var color2 = [0, 255, 0, 255];
-					for(var i = 0; i < path.length; i++){
-						drawPixel(path[i].x, path[i].y, color2, ctx);
-					}
+					drawPath(path);
 				}
 			}
 		}
@@ -399,6 +370,47 @@ canvas.addEventListener("click", function (evt) {
 	
 	
 }, false);
+
+function findEdge(nodeToSearch, nodeConnected){
+	
+	for(var i = 0; i < nodeToSearch.edges.length; i++){
+		if(nodeToSearch.edges[i].nodeBegin == nodeConnected ||
+			nodeToSearch.edges[i].nodeEnd == nodeConnected){
+				return nodeToSearch.edges[i];
+		}
+	}
+	return -1; //edge not found
+}
+
+function drawPath(path){
+	var color = [0, 255, 0, 255];
+
+	for(var i = 0; i < path.length; i++){
+		
+		if(i < path.length - 1){
+			var edg = findPath(path[i], path[i+1]);
+			if(edg != -1){
+				
+				console.log("edg: ");
+				console.log(edg);
+
+				var style = "#FF0000";
+				drawEdge(
+					edg[0].x,
+					edg[0].y,
+					edg[1].x,
+					edg[1].y,
+					style,
+					10
+				);
+			}
+		}
+		drawPoint(path[i].x, path[i].y, color, ctx);
+
+	}
+
+
+}
 
 function getNeighbors(node){
 	var nodes = [];
@@ -586,7 +598,7 @@ function grahamScam(P){
 	// console.log(angles);
 
 	// convexHull = P.slice(0);
-	var convexHull = Array.from(P);
+	convexHull = Array.from(P);
 
 	// array.push(array[0]);
 	// array.push(array[1]);
@@ -620,12 +632,12 @@ function grahamScam(P){
 	}
 	// console.log("hull lenght 1: " + convexHull.length);
 	drawConvexHull(convexHull, ctx);
+	console.log(convexHull);
 	return convexHull;
 }
 
 function drawConvexHull(hull, c){
 	// clearCanvas(c);
-	// drawPoints(P, c);
 	// console.log("draw convex");
 	// console.log("hull lenght 2: " + hull.length);
 	var color = [0, 255, 0, 255];
@@ -634,21 +646,35 @@ function drawConvexHull(hull, c){
 
 	if(hull.length > 2){
 		for(var i = 0; i < hull.length; i++){
-			c.beginPath();
+			// c.beginPath();
+			
+			var idx;
 			if(i != hull.length -1){
 				// console.log("aaaa");
-				c.moveTo(hull[i].x, hull[i].y);
-				c.lineTo(hull[i+1].x, hull[i+1].y);
+				// c.moveTo(hull[i].x, hull[i].y);
+				// c.lineTo(hull[i+1].x, hull[i+1].y);
+				idx = i+1;
 			}
 			else {
 				// console.log("bbbb");
-				c.moveTo(hull[i].x, hull[i].y);
-				c.lineTo(hull[0].x, hull[0].y);
+				// c.moveTo(hull[i].x, hull[i].y);
+				// c.lineTo(hull[0].x, hull[0].y);
+				idx = 0;
 			}
-			c.strokeStyle = "#000000";
-			c.stroke();
+			// c.strokeStyle = "#000000";
+			// c.stroke();
+
+			var style = "#000000";
+			drawEdge(
+				hull[i].x, 
+				hull[i].y, 
+				hull[idx].x, 
+				hull[idx].y, 
+				style);	
+
 			
-			drawPixel(hull[i].x * pixelOffset + canvasWidth/2, hull[i].y * pixelOffset + canvasHeight/2, color, c);
+			
+			drawPoint(hull[i].x * pixelOffset + canvasWidth/2, hull[i].y * pixelOffset + canvasHeight/2, color, c);
 		}
 	}
 	
@@ -663,6 +689,5 @@ function ccw(p1, p2, p3) {
 
 // PESQUISAR https://wikimapia.org
 
-// window.onload = drawPoints(points, ctx);
 document.getElementById("aStar").addEventListener("click", function(){ choosePath(); });
 
