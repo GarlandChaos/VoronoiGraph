@@ -1,25 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>TGA</title>
+	<title>Voronoi Graph + A*</title>
 	<link rel="stylesheet" href="./css/bootstrap.min.css">
+	<link rel="stylesheet" href="./css/style.css">	
 </head>
 <body>
 	<div class="container">
-			<h1>TGA</h1>
-			<!-- <button onclick="teste()">Teste</button> -->
-			<br>
-			<!-- <button onclick="calcVoronoi()">Voronoi</button> -->
-			<button class="btn btn-primary" id="aStar">A*</button>
-		
+		<div id="flexContainer">
+			<h1>Voronoi Graph + A*</h1>
+			<button class="btn btn-dark" id="aStar">A*</button>
+
+			<div id="infoText">
+				<p>Click on the box below to generate nodes. When you are satisfied, click A* to find the best path.</p>			
+				<p>Clique no quadro abaixo para gerar nodos. Quando estiver satisfeito, clique em A* para achar o melhor caminho.</p>
+			</div>
+
 			<div class="ptsContainer">
-				<h3>Pontos</h3>
-				<canvas style="border: 2px solid red" id="fixedPtsCanvas" width="500" height="500">
+				<canvas id="fixedPtsCanvas" width="500" height="500">
 					Your browser does not support the canvas element.
 				</canvas>  
 			</div>
+			
+		</div>
 	</div>
-	
 	
 	<script src="./rhill-voronoi-core.js"></script>
 	<script src="./functions.js"></script>

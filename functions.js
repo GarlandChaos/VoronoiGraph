@@ -1,3 +1,4 @@
+/*Graph structures */
 function Node(x, y){
 	this.edges = [];
 	this.id = -1;
@@ -28,32 +29,9 @@ function Graph(){
 Graph.prototype = {
 	constructor: Graph
 }
-
-var n1 = new Node();
-var n2 = new Node();
-var n3 = new Node();
-var n4 = new Node();
-
-var e1 = new Edge(n1, n2);
-var e2 = new Edge(n3, n4);
-
-var edgs = new Array();
-edgs.push(e1);
-edgs.push(e2);
-
-// n1.name = "node1";
-n1.edges = edgs;
-
-// n2.name = "node2";
+/* */
 
 var graph = new Graph();
-var selectingPath = false;
-
-function teste(){
-	
-	console.log("edges: " + n1.edges[0].nodeBegin.name);
-}
-
 var canvas = document.getElementById("fixedPtsCanvas");
 var ctx = canvas.getContext("2d");
 var r = 0;
@@ -67,36 +45,19 @@ var canvasHeight = 500;
 var pixel = ctx.createImageData(pxWidth, pxHeight);
 var dt = pixel.data;
 var pixelOffset = 17;
-var points = [
-	[-13, 0.5], 
-	[-10.5, -11.5],
-	[-10, 9], 
-	[-4.5, -2], 
-	[-1, 8.5],
-	[0.5, 6], 
-	[0.5, -12], 
-	[2, 12.5],
-	[3.5, 11], 
-	[5.5, 3], 
-	[5.5, -7],
-	[5, 11.5], 
-	[6.5, 3.2], 
-	[7, -10],
-	[9, -5], 
-	[11.5, -4] 
-]; 
 var convexHull = new Array();
+var selectingPath = false;
+var selectingStart = false;
+var selectingGoal = false;
+var startNode;
+var goalNode;
+var aStarBtn = document.getElementById("aStar");
+var voronoi = new Voronoi();
+var bbox = {xl: 0, xr: 500, yt: 0, yb: 500};
+var sites = []; 
+var diagram; 
 
 function drawPoint(x, y, color, c){
-
-    // dt[0] = color[0];
-    // dt[1] = color[1];
-    // dt[2] = color[2];
-    // dt[3] = color[0];
-    // c.putImageData( pixel, x, y ); 
-    
-    // c.fillStyle = "rgba("+color[0]+","+color[1]+","+color[2]+","+color[3]/255+")";
-	// c.fillRect( x, y, 5, 5 );  
 	
 	c.beginPath();
 	c.arc(x, y, 10, 0, 2 * Math.PI, false);
@@ -119,21 +80,8 @@ function clearCanvas(c){
     c.clearRect(0, 0, canvasWidth, canvasHeight);
 }
 
-var voronoi = new Voronoi();
-var bbox = {xl: 0, xr: 500, yt: 0, yb: 500}; // xl is x-left, xr is x-right, yt is y-top, and yb is y-bottom
-var sites = []; 
-// = [ {x: 200, y: 200}, {x: 50, y: 250}, {x: 400, y: 100}, {x: 250, y: 100} /* , ... */ ];
-
-// a 'vertex' is an object exhibiting 'x' and 'y' properties. The
-// Voronoi object will add a unique 'voronoiId' property to all
-// sites. The 'voronoiId' can be used as a key to lookup the associated cell
-// in diagram.cells.
-
-var diagram; 
-// = voronoi.compute(sites, bbox);
-
 function drawVoronoiPoints(P, c){
-	console.log(P);
+	// console.log(P);
 	var color = [0,0,0,255];
 	for(var i = 0; i < P.length; i++){
 		drawPoint(P[i][0], P[i][1], color, c);
@@ -141,18 +89,7 @@ function drawVoronoiPoints(P, c){
 }
 
 function drawVoronoiEdges(){
-
 	for(var i = 0; i < diagram.edges.length; i++){
-		// console.log(diagram.edges[i].va);
-		
-		// ctx.beginPath();
-		
-		// ctx.moveTo(diagram.edges[i].va.x, diagram.edges[i].va.y);
-		// ctx.lineTo(diagram.edges[i].vb.x, diagram.edges[i].vb.y);
-		
-		// ctx.strokeStyle = "#FF0000";
-		// ctx.stroke();
-
 		var style = "#cfd1d0";
 		drawEdge(
 			diagram.edges[i].va.x, 
@@ -164,17 +101,7 @@ function drawVoronoiEdges(){
 }
 
 function drawGraphEdges(){
-	console.log("GRAPH EDGES: " + graph.edges.length);
-
 	for(var i = 0; i < graph.edges.length; i++){
-		// ctx.beginPath();
-		
-		// ctx.moveTo(graph.edges[i].nodeBegin.x, graph.edges[i].nodeBegin.y);
-		// ctx.lineTo(graph.edges[i].nodeEnd.x, graph.edges[i].nodeEnd.y);
-		
-		// ctx.strokeStyle = "#00FF00";
-		// ctx.stroke();
-		
 		var style = "#00FF00";
 		drawEdge(
 			graph.edges[i].nodeBegin.x, 
@@ -192,7 +119,6 @@ function drawGraphNodes(){
 }
 
 function getDiagramInfo(){
-
 	graph = new Graph();
 	if(diagram.edges.length == 0){
 		graph.nodes.push(diagram.cells[0].site);
@@ -203,62 +129,54 @@ function getDiagramInfo(){
 			var checkId = checkNodeDuplicates(graph.nodes, diagram.edges[i].lSite.voronoiId); 
 			var checkId2 = checkNodeDuplicates(graph.nodes, diagram.edges[i].rSite.voronoiId);
 
-			if(checkId == -1){ //se nodo 1 não existe no grafo
+			if(checkId == -1){ //if node 1 doesn't exist on graph
 				var n1 = new Node();
 				n1.id = diagram.edges[i].lSite.voronoiId;
 				n1.x = diagram.edges[i].lSite.x;
 				n1.y = diagram.edges[i].lSite.y;
-
 				graph.nodes.push(n1);
 
-				if(checkId2 == -1){ //se nodo 2 também não existe no grafo
+				if(checkId2 == -1){ //if node 2 doesn't exist on graph too
 					var n2 = new Node();
 					n2.id = diagram.edges[i].rSite.voronoiId;
 					n2.x = diagram.edges[i].rSite.x;
 					n2.y = diagram.edges[i].rSite.y;
-
 					graph.nodes.push(n2);
 
 					var e = new Edge(n1, n2);
 					n1.edges.push(e);
 					n2.edges.push(e);
-
 					graph.edges.push(e);
 				}
-				else { //se nodo 1 não existe no grafo mas o nodo 2 sim
+				else { //if node 1 doesn't exist on graph but node 2 does exist
 					var e = new Edge(n1, graph.nodes[checkId2]);
 					n1.edges.push(e);
 					graph.nodes[checkId2].edges.push(e);
-
 					graph.edges.push(e);
 				}
 			}
 			else {
-				if(checkId2 == -1){ //se nodo 2 não existe no grafo
+				if(checkId2 == -1){ //if node 2 doesn't exist on graph
 					var n2 = new Node();
 					n2.id = diagram.edges[i].rSite.voronoiId;
 					n2.x = diagram.edges[i].rSite.x;
 					n2.y = diagram.edges[i].rSite.y;
-
 					graph.nodes.push(n2);
 
 					var e = new Edge(graph.nodes[checkId], n2);
 					graph.nodes[checkId].edges.push(e);
 					n2.edges.push(e);
-
 					graph.edges.push(e);
 				}
-				else { //se ambos nodos existem no grafo
+				else { //if both nodes doesn't exist on graph
 					var e = new Edge(graph.nodes[checkId], graph.nodes[checkId2]);
 					graph.nodes[checkId].edges.push(e);
 					graph.nodes[checkId2].edges.push(e);
-
 					graph.edges.push(e);
 				}
 			}	
 		}	
 	}
-
 	console.log(graph);
 }
 
@@ -277,7 +195,6 @@ function checkDuplicates(P, pos){
 			return 1;
 		}
 	}
-
 	return 0;
 }
 
@@ -290,42 +207,40 @@ function calcVoronoi(){
 	diagram = voronoi.compute(sites, bbox);
 }
 
-function selectPoints(){
-	// return Math.sqrt((point.x-circle.x) ** 2 + (point.y - circle.y) ** 2) < circle.radius;
-}
-
 function isIntersect(point, node) {
 	return Math.sqrt((point.x-node.x) ** 2 + (point.y - node.y) ** 2) < 10;
 }
 
-var selectingStart = false;
-var selectingGoal = false;
-
-var startNode;
-var goalNode;
-
-function choosePath(){
-	alert("Please click on start node:")
-	// if(selectingPath){
-	// 	selectingPath = false;
-	// }
-	// else {
-	// 	selectingPath = true;
-	// }
-	selectingPath = true;
-	selectingStart = true;
+function setOrUnsetPath(){
+	if(!selectingPath){
+		alert("Please click on start node:");
+		aStarBtn.innerHTML = "Cancel";
+		aStarBtn.classList.toggle("btn-dark");		
+		aStarBtn.classList.toggle("btn-danger");
+		selectingPath = true;
+		selectingStart = true;
+	}
+	else {
+		aStarBtn.innerHTML = "A*";
+		aStarBtn.classList.toggle("btn-dark");
+		aStarBtn.classList.toggle("btn-danger");
+		selectingPath = false;
+		selectingStart = false;
+		selectingGoal = false;		
+	}
 }
 
-//report the mouse position on click
+aStarBtn.addEventListener("click", function(){ 
+	setOrUnsetPath();
+});
+
 canvas.addEventListener("click", function (evt) {
     var mousePos = getMousePos(canvas, evt);
-	// alert(mousePos.x + ',' + mousePos.y);
 
 	if(!selectingPath){
 		var newPoint = {x: mousePos.x, y: mousePos.y};
 		if(checkDuplicates(sites, newPoint) != 1){
 			sites.push(newPoint);
-	
 			clearCanvas(ctx);
 			calcVoronoi();	
 			getDiagramInfo();			
@@ -333,46 +248,37 @@ canvas.addEventListener("click", function (evt) {
 			drawGraphEdges();
 			drawGraphNodes();
 			grahamScam(graph.nodes);
-	
 		}
 		else {
-			console.log("CONTÉM PONTO");
+			console.log("There is already a point in the given position");
 		}
 	}
 	else {
-		console.log("convexHull length: " + convexHull.length);
 		for(var i = 0; i < convexHull.length; i++){
 			if(isIntersect(mousePos, convexHull[i])){
-				// alert("clicked on point");
 				if(selectingStart){
 					startNode = convexHull[i];
 					var color = [255, 0, 0, 255];
 					drawPoint(convexHull[i].x, convexHull[i].y, color, ctx);
 					selectingStart = false;
 					selectingGoal = true;
-					console.log("startNode x: " + startNode.x + " startNode y: " + startNode.y);
 					alert("Please click on goal node:");
 				}
 				else if(selectingGoal){
 					goalNode = convexHull[i];
 					var color = [0, 0, 255, 255];
 					drawPoint(convexHull[i].x, convexHull[i].y, color, ctx);
-					selectingGoal = false;
-					selectingPath = false;
-					//A* code here
-					var path = findPath(startNode, goalNode);
+					setOrUnsetPath();
+					var path = findPath(startNode, goalNode); //A* code
 					console.log(path);
 					drawPath(path);
 				}
 			}
 		}
 	}
-	
-	
 }, false);
 
 function findEdge(nodeToSearch, nodeConnected){
-	
 	for(var i = 0; i < nodeToSearch.edges.length; i++){
 		if(nodeToSearch.edges[i].nodeBegin == nodeConnected ||
 			nodeToSearch.edges[i].nodeEnd == nodeConnected){
@@ -384,16 +290,11 @@ function findEdge(nodeToSearch, nodeConnected){
 
 function drawPath(path){
 	var color = [0, 255, 0, 255];
-
 	for(var i = 0; i < path.length; i++){
 		
 		if(i < path.length - 1){
 			var edg = findPath(path[i], path[i+1]);
 			if(edg != -1){
-				
-				console.log("edg: ");
-				console.log(edg);
-
 				var style = "#FF0000";
 				drawEdge(
 					edg[0].x,
@@ -406,15 +307,11 @@ function drawPath(path){
 			}
 		}
 		drawPoint(path[i].x, path[i].y, color, ctx);
-
 	}
-
-
 }
 
 function getNeighbors(node){
 	var nodes = [];
-	
 	for(var i = 0; i < node.edges.length; i++){
 		if(node.edges[i].nodeBegin != node){
 			nodes.push(node.edges[i].nodeBegin);
@@ -423,13 +320,11 @@ function getNeighbors(node){
 			nodes.push(node.edges[i].nodeEnd);
 		}
 	}
-
 	return nodes;
 }
 
 function dist(node1, node2){
-
-	return ((node1.x - node2.x) * (node1.x - node2.x)) + ((node1.y - node2.y) * (node1.y - node2.y));
+	return Math.sqrt(((node1.x - node2.x) * (node1.x - node2.x)) + ((node1.y - node2.y) * (node1.y - node2.y)));
 }
 
 function getCost(node1, node2){
@@ -437,40 +332,21 @@ function getCost(node1, node2){
 }
 
 function heuristic(goal, next){
-	return Math.abs(goal.x - next.x) + Math.abs(goal.y - next.y);
-}
-
-// insert sort for better priority queue performance
-Array.prototype.insertSorted = function(v, sortFn) {
-    if(this.length < 1 || sortFn(v, this[this.length-1]) >= 0) {
-        this.push(v);
-        return this;
-    }
-	for(var i=this.length-2; i>=0; --i) {
-        if(sortFn(v, this[i]) >= 0) {
-            this.splice(i+1, 0, v);
-            return this;
-        }
-    }
-	this.splice(0, 0, v);
-	return this;
+	return dist(goal, next);
 }
 
 Array.prototype.insertByPriority = function(value) {
-
 	for(var i = this.length - 2; i >= 0; i--){
 		if(this[i].priority > value.priority){
 			this.splice(i+1, 0, value);
             return this;
 		}
 	}
-
 	this.splice(0, 0, value);
 	return this;
 }
 
 function findPath(start, goal){
-
 	var open = [];
 	open.insertByPriority(start);
 
@@ -479,36 +355,23 @@ function findPath(start, goal){
 
 	cameFrom[start.id] = null;
 	costSoFar[start.id] = 0;
-	// console.log(costSoFar[start.id]);
 
 	while(open.length > 0){
 		var current = open.pop();
-		// console.log(current);
 
-		if(current == goal){
-			// console.log("END");
+		if(current == goal){ //Ends search, goal found
 			var path = [goal];
-
 			while(cameFrom[path[path.length-1].id]) {
 				path.push(cameFrom[path[path.length-1].id])
 			}
-
 			return path;
 		}
 			
 		var neighbors = getNeighbors(current);
-		// console.log(neighbors);
-
 		for(var i = 0; i < neighbors.length; i++){
 			var next = neighbors[i];
-			// console.log("next: ");
-			// console.log(next);
 			var newCost = costSoFar[current.id] + getCost(current, next);
-			// console.log("costSoFar[current.id]: ");
-			// console.log(costSoFar[current.id]);
-
 			if(costSoFar[next.id] == null || newCost < costSoFar[next.id]){
-				// console.log("entrou aqui no if!!");
 				costSoFar[next.id] = newCost;
 				priority = newCost + heuristic(goal, next);
 				next.priority = priority;
@@ -518,14 +381,9 @@ function findPath(start, goal){
 		}
 	}
 
-	// console.log(cameFrom);
-	// console.log("cameFrom.length is: " + cameFrom.length);
-
-	//failed
-	return [];
+	return []; //Failed, goal not found
 }
 
-//Get Mouse Position
 function getMousePos(canvas, evt) {
     var rect = canvas.getBoundingClientRect();
     return {
@@ -548,11 +406,10 @@ function normalize(v){
 }
 
 function sortPolarAngle(P){
-	
 	var minus = Infinity;
 	var lowYidx;
 	for(var i = 0; i < P.length; i++){
-		if(P[i].y < minus){ //attention here
+		if(P[i].y < minus){
 			minus = P[i].y;
 			lowYidx = i;  
 		}
@@ -586,83 +443,38 @@ function sortPolarAngle(P){
 		angleArray[j + 1] = chosenAngle; 
 		P[j + 1] = chosenPoint;
 	}
-
 	return angleArray;
 }
 
 function grahamScam(P){
 
-	// var convexHull = [];
-
 	var angles = sortPolarAngle(P);
-	// console.log(angles);
-
-	// convexHull = P.slice(0);
 	convexHull = Array.from(P);
 
-	// array.push(array[0]);
-	// array.push(array[1]);
-	// array.push(array[array.length-1]);
-
-	// console.log("hull lenght 0: " + convexHull.length);
-	// var d = convexHull.slice(0);
-	// console.log(d);
-
 	for(var i = 2; i < convexHull.length - 1; i++){
-		// var v = ccw(convexHull[i], convexHull[i - 1], convexHull[i + 1]); // > 0 keep, < 0 discard
 		var v = ccw(convexHull[i - 1], convexHull[i], convexHull[i + 1]); // > 0 keep, < 0 discard
-		// var v = ccw(convexHull[i], convexHull[i - 1], convexHull[i + 1]); // > 0 keep, < 0 discard
-
-		// console.log("v: " + v);
-		// console.log("LENGTH: " + convexHull.length);
-		if(v < 0){ //attention here
-			convexHull.splice(i, 1); //remove point from array
-			// console.log("convexHull lenght before: " + convexHull.length + " and i: " + i);
-			// console.log(convexHull[i]);
-			// var a = convexHull.slice(0);
-			// console.log(a);
+		if(v < 0){
+			convexHull.splice(i, 1);
 			i-=2;
-			// console.log("convexHull lenght after: " + convexHull.length + " and i: " + i);
-			// var b = convexHull.slice(0);
-			// console.log(b);
 		}
-		// else {
-			
-		// }
 	}
-	// console.log("hull lenght 1: " + convexHull.length);
 	drawConvexHull(convexHull, ctx);
 	console.log(convexHull);
 	return convexHull;
 }
 
 function drawConvexHull(hull, c){
-	// clearCanvas(c);
-	// console.log("draw convex");
-	// console.log("hull lenght 2: " + hull.length);
 	var color = [0, 255, 0, 255];
 
-	// sortPolarAngle(hull);
-
 	if(hull.length > 2){
-		for(var i = 0; i < hull.length; i++){
-			// c.beginPath();
-			
+		for(var i = 0; i < hull.length; i++){			
 			var idx;
 			if(i != hull.length -1){
-				// console.log("aaaa");
-				// c.moveTo(hull[i].x, hull[i].y);
-				// c.lineTo(hull[i+1].x, hull[i+1].y);
 				idx = i+1;
 			}
 			else {
-				// console.log("bbbb");
-				// c.moveTo(hull[i].x, hull[i].y);
-				// c.lineTo(hull[0].x, hull[0].y);
 				idx = 0;
 			}
-			// c.strokeStyle = "#000000";
-			// c.stroke();
 
 			var style = "#000000";
 			drawEdge(
@@ -672,22 +484,12 @@ function drawConvexHull(hull, c){
 				hull[idx].y, 
 				style);	
 
-			
-			
 			drawPoint(hull[i].x * pixelOffset + canvasWidth/2, hull[i].y * pixelOffset + canvasHeight/2, color, c);
 		}
 	}
-	
 }
 
 function ccw(p1, p2, p3) {
 	// ccw < 0: counter-clockwise; ccw > 0: clockwise; ccw = 0: collinear
    return (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
-//    return (p2.y - p1.y) * (p3.x - p1.x) - (p2.x - p1.x) * (p3.y - p1.y);
-//    return (p2.y - p1.y) * (p3.x - p2.x) - (p2.x - p1.x) * (p3.y - p2.y); 
-} 
-
-// PESQUISAR https://wikimapia.org
-
-document.getElementById("aStar").addEventListener("click", function(){ choosePath(); });
-
+}
